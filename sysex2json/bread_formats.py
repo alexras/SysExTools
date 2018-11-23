@@ -103,8 +103,15 @@ compressed_voice = [
     ('lfo_pitch_mod_depth', b.uint8),
     ('lfo_amp_mod_depth', b.uint8),
     # Byte 116
+
+    # This deviates from the diagram slightly, but matches what I'm seeing in
+    # practice - pitch mod sensitivity is specified as 2 bits, but given that
+    # its value is allowed to vary from 0-7, that can't possibly be the
+    # case. This has the happy side-effect of shifting the LFO waveform over by
+    # a bit, which allows us to parse waveforms properly.
+    b.padding(1),
     ('pitch_mod_sensitivity', b.intX(3)),
-    ('lfo_waveform', b.enum(4, enums['waveforms'])),
+    ('lfo_waveform', b.enum(3, enums['waveforms'])),
     ('lfo_sync', b.intX(1)),
     # Byte 117
     ('transpose', b.uint8),
