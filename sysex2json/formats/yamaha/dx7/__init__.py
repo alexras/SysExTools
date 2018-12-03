@@ -7,8 +7,8 @@ from .spec import sysex_dump_message
 def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
     parsed_operator = {
         'envelope_generator': {
-            'rates': operator.eg_rates,
-            'levels': operator.eg_levels
+            'rates': operator.eg_rates.as_native(),
+            'levels': operator.eg_levels.as_native()
         },
         'keyboard': {
             'level_scaling': {
@@ -38,7 +38,25 @@ def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
 
 def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
     parsed_voice = {
-        'operators': []
+        'operators': [],
+        'pitch_envelope_generator': {
+            'rates': voice.pitch_eg_rates.as_native(),
+            'levels': voice.pitch_eg_levels.as_native()
+        },
+        'algorithm': voice.algorithm,
+        'feedback': voice.feedback,
+        'oscillator_key_sync': bool(voice.oscillator_sync),
+        'lfo': {
+            'speed': voice.lfo_speed,
+            'delay': voice.lfo_delay,
+            'pitch_mod_depth': voice.lfo_pitch_mod_depth,
+            'amp_mod_depth': voice.lfo_amp_mod_depth,
+            'key_sync': bool(voice.lfo_sync),
+            'waveform': voice.lfo_waveform
+        },
+        'pitch_mod_sensitivity': voice.pitch_mod_sensitivity,
+        'transpose': voice.transpose,
+        'name': voice.name.strip()
     }  # type: dict
 
     # Operators in the DX7 are listed from OP6 to OP1, so we'll iterate through
