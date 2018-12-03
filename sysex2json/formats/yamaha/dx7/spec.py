@@ -25,7 +25,7 @@ enums = {
 raw_operator = [
     ('eg_rates', b.array(4, b.uint8)),
     ('eg_levels', b.array(4, b.uint8)),
-    ('keyboard_level_scaling_break_point', b.uint8), # C3 = 0x27
+    ('keyboard_level_scaling_break_point', b.uint8),  # C3 = 0x27
     ('keyboard_level_scaling_left_depth', b.uint8),
     ('keyboard_level_scaling_right_depth', b.uint8),
     ('keyboard_level_scaling_left_curve', b.enum(8, enums['curves'])),
@@ -37,7 +37,7 @@ raw_operator = [
     ('osc_mode', b.enum(8, enums['osc_mode'])),
     ('osc_frequency_course', b.uint8),
     ('osc_frequency_fine', b.uint8),
-    ('osc_detune', b.uint8, {'offset': -7}) # Range from -7 to 7
+    ('osc_detune', b.uint8, {'offset': -7})  # Range from -7 to 7
 ]
 
 raw_voice = [
@@ -61,7 +61,7 @@ raw_voice = [
 compressed_operator = [
     ('eg_rates', b.array(4, b.uint8)),
     ('eg_levels', b.array(4, b.uint8)),
-    ('keyboard_level_scaling_break_point', b.uint8), # C3 = 0x27
+    ('keyboard_level_scaling_break_point', b.uint8),  # C3 = 0x27
     ('keyboard_level_scaling_left_depth', b.uint8),
     ('keyboard_level_scaling_right_depth', b.uint8),
     b.padding(4),
@@ -92,7 +92,7 @@ compressed_voice = [
     ('pitch_eg_levels', b.array(4, b.uint8)),
     # Byte 110
     b.padding(3),
-    ('algorithm', b.intX(5)),
+    ('algorithm', b.intX(5), {'offset': 1}),
     # Byte 111
     b.padding(4),
     ('oscillator_sync', b.intX(1)),
@@ -123,12 +123,10 @@ voice_bank = [
 ]
 
 sysex_dump_message = [
-    ('start_sysex', b.uint8), # should be 0xf0
-    ('id', b.uint8),
     b.padding(1),
     ('sub_status', b.intX(3)),
     ('channel_number', b.intX(4), {'offset': 1}),
-    ('format_number', b.uint8), # 0 = 1 voice, 9 = 32 voices
+    ('format_number', b.uint8),  # 0 = 1 voice, 9 = 32 voices
     # The byte count for DX7 sysex dumps is actually stored as a 7-bit MSB and
     # a 7-bit LSB. So a byte count value of 0x011b means that the dump contains
     # a single, 155-byte uncompressed voice, while a byte count value of 0x2000
@@ -138,6 +136,5 @@ sysex_dump_message = [
         1: raw_voice,
         9: voice_bank
     }),
-    ('checksum', b.uint8), # masked 2's complement of sum of data bytes
-    ('end_sysex', b.uint8) # should be 0xf7
+    ('checksum', b.uint8)  # masked 2's complement of sum of data bytes
 ]
