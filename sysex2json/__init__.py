@@ -1,6 +1,5 @@
-import json
 import os
-from typing import Callable, Dict, List, Tuple  # noqa
+from typing import Any, Callable, Dict, List, Tuple  # noqa
 
 
 from .constants import SYSEX_START_BYTE, SYSEX_END_BYTE, EXTENDED_MANUFACTURER_ID_BYTE
@@ -24,7 +23,7 @@ def byte_to_int(byte) -> int:
     return int.from_bytes(byte, byteorder='little')
 
 
-def parse(sysex_file, **kwargs) -> Dict[str, str]:
+def parse(sysex_file, **kwargs) -> List[Dict[str, Any]]:
     with open(sysex_file, 'rb') as fp:
         # Check that the sysex message looks basically valid (i.e. that it starts
         # and ends with the expected SysEx control bytes)
@@ -56,4 +55,4 @@ def parse(sysex_file, **kwargs) -> Dict[str, str]:
         # Read the non-control SysEx bytes and pass them to the appropriate parser
         sysex_bytes = fp.read(os.path.getsize(sysex_file) - len(manufacturer_id) - 2)
 
-        return {x['name']: json.dumps(x) for x in _PARSERS[manufacturer_id](sysex_bytes, **kwargs)}
+        return _PARSERS[manufacturer_id](sysex_bytes, **kwargs)

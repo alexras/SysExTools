@@ -1,5 +1,9 @@
-import bread
+from copy import deepcopy
+from hashlib import sha1
+import json
 import typing
+
+import bread
 
 from .spec import sysex_dump_message
 
@@ -36,6 +40,13 @@ def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
     return parsed_operator
 
 
+def compute_signature(voice):
+    voice_copy = deepcopy(voice)
+    del voice_copy['name']
+
+    return sha1(json.dumps(voice_copy, sort_keys=True).encode('utf-8')).hexdigest()
+
+
 def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
     parsed_voice = {
         'operators': [],
@@ -64,6 +75,8 @@ def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
 
     for op in reversed(voice.operators):
         parsed_voice['operators'].append(parse_operator(op))
+
+    parsed_voice['signature'] = compute_signature(parsed_voice)
 
     return parsed_voice
 
