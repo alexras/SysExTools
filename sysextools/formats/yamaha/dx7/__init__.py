@@ -67,7 +67,9 @@ def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
         },
         'pitch_mod_sensitivity': voice.pitch_mod_sensitivity,
         'transpose': voice.transpose,
-        'name': voice.name.strip()
+        'name': voice.name.strip(),
+        'MANUFACTURER': 'yamaha',
+        'MODEL': 'dx7'
     }  # type: dict
 
     # Operators in the DX7 are listed from OP6 to OP1, so we'll iterate through
