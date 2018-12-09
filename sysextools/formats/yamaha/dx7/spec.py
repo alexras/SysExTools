@@ -35,7 +35,7 @@ raw_operator = [
     ('key_velocity_sensitivity', b.uint8),
     ('output_level', b.uint8),
     ('osc_mode', b.enum(8, enums['osc_mode'])),
-    ('osc_frequency_course', b.uint8),
+    ('osc_frequency_coarse', b.uint8),
     ('osc_frequency_fine', b.uint8),
     ('osc_detune', b.uint8, {'offset': -7})  # Range from -7 to 7
 ]
@@ -80,7 +80,7 @@ compressed_operator = [
     ('output_level', b.uint8),
     # Byte 15
     b.padding(2),
-    ('osc_frequency_course', b.intX(5)),
+    ('osc_frequency_coarse', b.intX(5)),
     ('osc_mode', b.enum(1, enums['osc_mode'])),
     # Byte 16
     ('osc_frequency_fine', b.uint8)

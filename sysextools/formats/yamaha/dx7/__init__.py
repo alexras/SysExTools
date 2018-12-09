@@ -1,14 +1,22 @@
 from copy import deepcopy
 from hashlib import sha1
 import json
-import typing
+from typing import cast, Type, Union
 
 import bread
 
 from .spec import sysex_dump_message
 
+# Single-voice SysEx messages for the DX7 expand all 155 parameters into a
+# parameter per byte. Multi-voice messages compact each voice into 128 bytes
+# and have 32 voices per message. There's also a four-byte header and a
+# checksum byte
+SYSEX_HEADER_SIZE = 4
+SINGLE_VOICE_SYSEX_LENGTH = 155 + SYSEX_HEADER_SIZE + 1
+MULTI_VOICE_SYSEX_LENGTH = 32 * 128 + SYSEX_HEADER_SIZE + 1
 
-def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
+
+def parse_operator(operator: Type[bread.BreadStruct]) -> dict:
     parsed_operator = {
         'envelope_generator': {
             'rates': operator.eg_rates.as_native(),
@@ -29,7 +37,7 @@ def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
             'detune': operator.osc_detune,
             'frequency': {
                 'fine': operator.osc_frequency_fine,
-                'coarse': operator.osc_frequency_course
+                'coarse': operator.osc_frequency_coarse
             },
             'mode': operator.osc_mode
         },
@@ -40,6 +48,24 @@ def parse_operator(operator: typing.Type[bread.BreadStruct]) -> dict:
     return parsed_operator
 
 
+def load_parsed_operator_into_struct(operator: dict, struct: Type[bread.BreadStruct]):
+    struct.eg_rates = operator['envelope_generator']['rates']
+    struct.eg_levels = operator['envelope_generator']['levels']
+    struct.keyboard_level_scaling_break_point = operator['keyboard']['level_scaling']['break_point']
+    struct.keyboard_level_scaling_left_depth = operator['keyboard']['level_scaling']['left_depth']
+    struct.keyboard_level_scaling_right_depth = operator['keyboard']['level_scaling']['right_depth']
+    struct.keyboard_level_scaling_left_curve = operator['keyboard']['level_scaling']['left_curve']
+    struct.keyboard_level_scaling_right_curve = operator['keyboard']['level_scaling']['right_curve']
+    struct.keyboard_rate_scaling = operator['keyboard']['rate_scaling']
+    struct.key_velocity_sensitivity = operator['keyboard']['velocity_sensitivity']
+    struct.osc_detune = operator['oscillator']['detune']
+    struct.osc_frequency_fine = operator['oscillator']['frequency']['fine']
+    struct.osc_frequency_coarse = operator['oscillator']['frequency']['coarse']
+    struct.osc_mode = operator['oscillator']['mode']
+    struct.amp_mod_sensitivity = operator['amp_mod_sensitivity']
+    struct.output_level = operator['output_level']
+
+
 def compute_signature(voice):
     voice_copy = deepcopy(voice)
     del voice_copy['name']
@@ -47,7 +73,7 @@ def compute_signature(voice):
     return sha1(json.dumps(voice_copy, sort_keys=True).encode('utf-8')).hexdigest()
 
 
-def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
+def parse_voice(voice: Type[bread.BreadStruct]) -> dict:
     parsed_voice = {
         'operators': [],
         'pitch_envelope_generator': {
@@ -83,8 +109,24 @@ def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
     return parsed_voice
 
 
-def load_parsed_voice_into_struct(voice: typing.Union[dict, list], struct: typing.Type[bread.BreadStruct]):
-    pass
+def load_parsed_voice_into_struct(voice: dict, struct: Type[bread.BreadStruct]):
+    for parsed_operator, struct_operator in zip(reversed(voice['operators']), struct.operators):
+        load_parsed_operator_into_struct(parsed_operator, struct_operator)
+
+    struct.pitch_eg_rates = voice['pitch_envelope_generator']['rates']
+    struct.pitch_eg_levels = voice['pitch_envelope_generator']['levels']
+    struct.algorithm = voice['algorithm']
+    struct.feedback = voice['feedback']
+    struct.oscillator_sync = voice['oscillator_key_sync']
+    struct.lfo_speed = voice['lfo']['speed']
+    struct.lfo_delay = voice['lfo']['delay']
+    struct.lfo_pitch_mod_depth = voice['lfo']['pitch_mod_depth']
+    struct.lfo_amp_mod_depth = voice['lfo']['amp_mod_depth']
+    struct.lfo_sync = voice['lfo']['key_sync']
+    struct.lfo_waveform = voice['lfo']['waveform']
+    struct.pitch_mod_sensitivity = voice['pitch_mod_sensitivity']
+    struct.transpose = voice['transpose']
+    struct.name = voice['name'].ljust(len(struct.name))
 
 
 def parse(sysex_bytes: bytes) -> list:
@@ -98,20 +140,37 @@ def parse(sysex_bytes: bytes) -> list:
     return parsed_voices
 
 
-def dump(sysex_json: typing.Union[dict, list]) -> bytes:
+def compute_checksum(data):
+    # To compute the checksum for DX7 SysEx messages:
+    #
+    # 1. compute the sum of the message's data bytes
+    # 2. mask that number so that it's 7 bits long
+    # 3. compute the masked number's 2s complement, and mask the result so it's 7 bits long
+
+    return (~(sum(data[SYSEX_HEADER_SIZE:-1]) & 0x7f) & 0x7f) + 1
+
+
+def dump(sysex_json: Union[dict, list]) -> bytes:
     if type(sysex_json) == dict:
         # Single voice
-        single_voice_sysex = bread.new(sysex_dump_message)
-        single_voice_sysex.format_number = 0
+        single_voice_blank_data = bytearray(SINGLE_VOICE_SYSEX_LENGTH)
+        single_voice_blank_data[1] = 1
+        sysex = bread.new(sysex_dump_message, data=single_voice_blank_data)
+        sysex.format_number = 0
+        sysex.byte_count = 0x011b
 
-        load_parsed_voice_into_struct(sysex_json, single_voice_sysex)
-
-        return bread.write(single_voice_sysex, sysex_dump_message)
+        load_parsed_voice_into_struct(cast(dict, sysex_json), sysex)
     else:
-        multivoice_sysex = bread.new(sysex_dump_message)
-        multivoice_sysex.format_number = 9
+        multivoice_blank_data = bytearray(MULTI_VOICE_SYSEX_LENGTH)
+        multivoice_blank_data[1] = 9
+        sysex = bread.new(sysex_dump_message, data=multivoice_blank_data)
+        sysex.format_number = 9
+        sysex.byte_count = 0x2000
 
         for i, voice in enumerate(sysex_json):
-            load_parsed_voice_into_struct(sysex_json[i], multivoice_sysex.voices[i])
+            load_parsed_voice_into_struct(sysex_json[i], sysex.voices[i])
 
-        return bread.write(multivoice_sysex, sysex_dump_message)
+    parsed_data = bread.write(sysex, sysex_dump_message)
+    sysex.checksum = compute_checksum(parsed_data)
+
+    return bread.write(sysex, sysex_dump_message)

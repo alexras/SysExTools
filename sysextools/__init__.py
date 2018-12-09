@@ -76,3 +76,4 @@ def dump(parsed_sysex: List[Dict[str, Any]], sysex_file: str):
         fp.write(dumped_bytes)
 
         fp.write(SYSEX_END_BYTE.to_bytes(1, byteorder='little'))
+        fp.flush()
