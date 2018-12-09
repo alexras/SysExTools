@@ -83,6 +83,10 @@ def parse_voice(voice: typing.Type[bread.BreadStruct]) -> dict:
     return parsed_voice
 
 
+def load_parsed_voice_into_struct(voice: typing.Union[dict, list], struct: typing.Type[bread.BreadStruct]):
+    pass
+
+
 def parse(sysex_bytes: bytes) -> list:
     raw_struct = bread.parse(sysex_bytes, sysex_dump_message)
 
@@ -92,3 +96,22 @@ def parse(sysex_bytes: bytes) -> list:
         parsed_voices = [parse_voice(x) for x in raw_struct.voices]
 
     return parsed_voices
+
+
+def dump(sysex_json: typing.Union[dict, list]) -> bytes:
+    if type(sysex_json) == dict:
+        # Single voice
+        single_voice_sysex = bread.new(sysex_dump_message)
+        single_voice_sysex.format_number = 0
+
+        load_parsed_voice_into_struct(sysex_json, single_voice_sysex)
+
+        return bread.write(single_voice_sysex, sysex_dump_message)
+    else:
+        multivoice_sysex = bread.new(sysex_dump_message)
+        multivoice_sysex.format_number = 9
+
+        for i, voice in enumerate(sysex_json):
+            load_parsed_voice_into_struct(sysex_json[i], multivoice_sysex.voices[i])
+
+        return bread.write(multivoice_sysex, sysex_dump_message)

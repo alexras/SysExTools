@@ -1,26 +1,29 @@
 import os
-from typing import Any, Callable, Dict, List, Tuple  # noqa
+from typing import Any, Callable, cast, Dict, List, Tuple, Union  # noqa
 
 
 from .constants import SYSEX_START_BYTE, SYSEX_END_BYTE, EXTENDED_MANUFACTURER_ID_BYTE
 from .formats import yamaha
-
-
-class ParseError(Exception):
-    pass
-
-
-class NotSupportedError(Exception):
-    pass
-
+from .errors import ParseError, NotSupportedError
 
 _PARSERS = {
     yamaha.MANUFACTURER_ID: yamaha.parse
 }  # type: Dict[Tuple[int,...], Callable]
 
+# This is a map from strings to modules, but typing annotations don't seem to
+# know about modules, so I'm annotating it as having "any" as its value type
+# TODO: is there a more elegant way of doing this?
+_FORMATS = {
+    'yamaha': yamaha
+}  # type: Dict[str, Any]
+
 
 def byte_to_int(byte) -> int:
     return int.from_bytes(byte, byteorder='little')
+
+
+def int_to_byte(i: int) -> bytes:
+    return i.to_bytes(1, byteorder='little')
 
 
 def parse(sysex_file, **kwargs) -> List[Dict[str, Any]]:
@@ -56,3 +59,20 @@ def parse(sysex_file, **kwargs) -> List[Dict[str, Any]]:
         sysex_bytes = fp.read(os.path.getsize(sysex_file) - len(manufacturer_id) - 2)
 
         return _PARSERS[manufacturer_id](sysex_bytes, **kwargs)
+
+
+def dump(parsed_sysex: List[Dict[str, Any]], sysex_file: str):
+    manufacturer = parsed_sysex[0]['MANUFACTURER']
+
+    format_lib = _FORMATS[manufacturer]
+
+    with open(sysex_file, 'wb') as fp:
+        fp.write(SYSEX_START_BYTE.to_bytes(1, byteorder='little'))
+
+        for id_chunk in format_lib.MANUFACTURER_ID:
+            fp.write(id_chunk.to_bytes(1, byteorder='little'))
+
+        dumped_bytes = format_lib.dump(parsed_sysex)
+        fp.write(dumped_bytes)
+
+        fp.write(SYSEX_END_BYTE.to_bytes(1, byteorder='little'))
