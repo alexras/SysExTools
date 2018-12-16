@@ -68,7 +68,7 @@ def load_parsed_operator_into_struct(operator: dict, struct: Type[bread.BreadStr
 
 def compute_signature(voice):
     voice_copy = deepcopy(voice)
-    del voice_copy['name']
+    del voice_copy['NAME']
 
     return sha1(json.dumps(voice_copy, sort_keys=True).encode('utf-8')).hexdigest()
 
@@ -93,7 +93,7 @@ def parse_voice(voice: Type[bread.BreadStruct]) -> dict:
         },
         'pitch_mod_sensitivity': voice.pitch_mod_sensitivity,
         'transpose': voice.transpose,
-        'name': voice.name.strip(),
+        'NAME': voice.name.strip(),
         'MANUFACTURER': 'yamaha',
         'MODEL': 'dx7'
     }  # type: dict
@@ -104,7 +104,7 @@ def parse_voice(voice: Type[bread.BreadStruct]) -> dict:
     for op in reversed(voice.operators):
         parsed_voice['operators'].append(parse_operator(op))
 
-    parsed_voice['signature'] = compute_signature(parsed_voice)
+    parsed_voice['SIGNATURE'] = compute_signature(parsed_voice)
 
     return parsed_voice
 
@@ -126,7 +126,7 @@ def load_parsed_voice_into_struct(voice: dict, struct: Type[bread.BreadStruct]):
     struct.lfo_waveform = voice['lfo']['waveform']
     struct.pitch_mod_sensitivity = voice['pitch_mod_sensitivity']
     struct.transpose = voice['transpose']
-    struct.name = voice['name'].ljust(len(struct.name))
+    struct.name = voice['NAME'].ljust(len(struct.name))
 
 
 def parse(sysex_bytes: bytes) -> list:

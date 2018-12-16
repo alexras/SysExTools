@@ -1,36 +1,19 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import json
-import sys
 
-from sysextools import parse, dump
-
-
-def extract_voices(sysex_file: str, debug: bool, output: str):
-
-    voices = parse(sysex_file)
-
-    if debug:
-        dump(voices, 'debug_output.syx')
-
-    for voice in voices:
-        dump([voice], f"{output}/{voice['signature']}.syx")
-        with open(f"{output}/{voice['signature']}.json", 'w+') as fp:
-            json.dump(voice, fp, indent=2)
+from sysextools.cli.extract_voices import extract_voices
 
 
 def main():
     parser = argparse.ArgumentParser(description='extract individual voices from a SysEx file')
     parser.add_argument('sysex_file', help='the file from which to extract')
+    parser.add_argument('-a', '--author', help="author's name, to inject into each voice's JSON description")
+    parser.add_argument('-s', '--source', help="source URL for the voices, to inject in each voice's JSON description")
     parser.add_argument('-d', '--debug', default=False, action='store_true', help='enables debug mode')
     parser.add_argument('-o', '--output', default='.', help='location to dump files (default %(default)s)')
 
     args = parser.parse_args()
-
-    if not os.path.exists(args.output):
-        sys.exit(f"Output path ({args.output}) must exist")
 
     extract_voices(**vars(args))
 

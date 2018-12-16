@@ -133,7 +133,7 @@ sysex_dump_message = [
     # means that the dump contains 32 128-byte compressed voices.
     ('byte_count', b.uint16, {'endianness': b.BIG_ENDIAN}),
     (b.CONDITIONAL, "format_number", {
-        1: raw_voice,
+        0: raw_voice,
         9: voice_bank
     }),
     ('checksum', b.uint8)  # masked 2's complement of sum of data bytes
