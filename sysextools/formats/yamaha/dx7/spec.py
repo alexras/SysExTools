@@ -18,7 +18,9 @@ enums = {
         2: 'saw up',
         3: 'square',
         4: 'sine',
-        5: 'sample and hold'
+        # Some sysex parsers (like the one in Dexed) seem to accept 6 and 7 as a
+        # valid value for S&H, even though the spec's value is 5
+        (5, 6, 7): 'sample and hold'
     }
 }
 

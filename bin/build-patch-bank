@@ -6,8 +6,8 @@ from sysextools.cli.build_patch_bank import build_patch_bank
 
 
 def main():
-    parser = argparse.ArgumentParser(description='build a patch bank from a directory of sysex files')
-    parser.add_argument('sysex_files_dir', help='directory from which to build the patch bank')
+    parser = argparse.ArgumentParser(description='build or add to a patch bank from a directory of sysex files')
+    parser.add_argument('sysex_files_dir', help='directory from which to build or add to the patch bank')
     parser.add_argument('output_dir', help='directory to which to output the patch bank itself')
     args = parser.parse_args()
 

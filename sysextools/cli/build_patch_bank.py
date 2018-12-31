@@ -33,7 +33,7 @@ def process_sysex(sysex_file: os.DirEntry, output_dir: str, author: Optional[str
         output_subdir = os.path.join(output_dir, signature[:2])
 
         output_sysex = os.path.join(output_subdir, f"{signature}.syx")
-        output_json = os.path.join(output_subdir, f"{signature}.syx")
+        output_json = os.path.join(output_subdir, f"{signature}.json")
 
         if os.path.exists(output_sysex):
             logging.info(f"Instrument {voice['NAME']} is a duplicate ({voice['SIGNATURE']}); skipping")
@@ -59,14 +59,23 @@ def process_sysex(sysex_file: os.DirEntry, output_dir: str, author: Optional[str
 
 
 def build_patch_bank(sysex_files_dir: str, output_dir: str):
-    patch_list = []
+    patch_list_file = os.path.join(output_dir, 'patch_list.json')
+
+    patch_list = []  # type: List[dict]
+
+    if os.path.exists(patch_list_file):
+        with open(patch_list_file, 'r') as fp:
+            patch_list = json.load(fp)
 
     builtins = []
     user_built = []
 
     # Build subdirectories for each of the prefixes so we can keep directories relatively small
     for i in range(256):
-        os.mkdir(os.path.join(output_dir, "{:02x}".format(i)))
+        try:
+            os.mkdir(os.path.join(output_dir, "{:02x}".format(i)))
+        except FileExistsError:
+            pass
 
     # Partition folders into built-ins and user-constructed sysex files, so
     # that we can scan the built-ins first
@@ -100,5 +109,5 @@ def build_patch_bank(sysex_files_dir: str, output_dir: str):
                     patch_list.extend(process_sysex(f, output_dir, source=source, author=author))
 
 
-    with open(os.path.join(output_dir, 'patch_list.json'), 'w+') as fp:
+    with open(patch_list_file, 'w+') as fp:
         json.dump(patch_list, fp, indent=2)
