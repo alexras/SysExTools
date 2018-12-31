@@ -1,6 +1,8 @@
 import bread as b
 # Format taken from https://github.com/asb2m10/dexed/blob/master/Documentation/sysex-format.txt
 
+NAME_ENCODING = 'utf-8'
+
 enums = {
     'curves': {
         0: '-LIN',
@@ -57,7 +59,7 @@ raw_voice = [
     ('lfo_waveform', b.enum(8, enums['waveforms'])),
     ('pitch_mod_sensitivity', b.uint8),
     ('transpose', b.uint8),
-    ('name', b.string(10))
+    ('name', b.string(10, NAME_ENCODING))
 ]
 
 compressed_operator = [
@@ -117,7 +119,7 @@ compressed_voice = [
     ('lfo_sync', b.intX(1)),
     # Byte 117
     ('transpose', b.uint8),
-    ('name', b.string(10))
+    ('name', b.string(10, NAME_ENCODING))
 ]
 
 voice_bank = [
