@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+import argparse
+import shutil
+
+from sysextools import add_headers_and_footers
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Add SysEx headers and footers to a bare sysex patch bank')
+
+    parser.add_argument('input_file', help='file to which to add headers')
+    parser.add_argument('manufacturer', help='instrument manufacturer')
+    parser.add_argument('model', help='instrument model')
+    parser.add_argument('-i', '--backup_extension', help='Edit files in-place, saving backups with an extension.'
+                        'If no extension is provided, no backup will be saved')
+
+
+    args = parser.parse_args()
+
+    if args.backup_extension:
+        shutil.copyfile(args.input_file, args.input_file + '.' + args.backup_extension)
+
+    output_bytes = add_headers_and_footers(args.input_file, args.manufacturer, args.model)
+
+    with open(args.input_file, 'wb+') as fp:
+        fp.write(output_bytes)
+
+
+if __name__ == '__main__':
+    main()

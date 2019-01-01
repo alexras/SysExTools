@@ -17,3 +17,10 @@ def dump(parsed_sysex: List[Dict[str, Any]]) -> bytes:
         return dx7.dump(parsed_sysex)
     else:
         raise NotSupportedError()
+
+
+def add_headers_and_footers(bank_bytes: bytes, model: str) -> bytes:
+    if model == 'dx7':
+        return dx7.add_headers_and_footers(bank_bytes)
+    else:
+        raise NotSupportedError()

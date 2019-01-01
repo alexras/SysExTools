@@ -140,14 +140,19 @@ def parse(sysex_bytes: bytes) -> list:
     return parsed_voices
 
 
-def compute_checksum(data):
+def compute_checksum(data: bytes, offset_start: int = SYSEX_HEADER_SIZE, offset_end: int = 1):
     # To compute the checksum for DX7 SysEx messages:
     #
     # 1. compute the sum of the message's data bytes
     # 2. mask that number so that it's 7 bits long
     # 3. compute the masked number's 2s complement, and mask the result so it's 7 bits long
 
-    return (~(sum(data[SYSEX_HEADER_SIZE:-1]) & 0x7f) & 0x7f) + 1
+    if offset_end == 0:
+        off_end = None
+    else:
+        off_end = -(offset_end)
+
+    return (~(sum(data[offset_start:off_end]) & 0x7f) & 0x7f) + 1
 
 
 def dump(sysex_json: Union[dict, list]) -> bytes:
@@ -174,3 +179,20 @@ def dump(sysex_json: Union[dict, list]) -> bytes:
     sysex.checksum = compute_checksum(parsed_data)
 
     return bread.write(sysex, sysex_dump_message)
+
+
+def add_headers_and_footers(bank_bytes: bytes) -> bytes:
+    output_bytes = bytes([0x00])
+
+    if len(bank_bytes) == 32 * 128:
+        output_bytes += bytes([0x09, 0x20, 0x00])
+    elif len(bank_bytes) == 155:
+        output_bytes += bytes([0x00, 0x01, 0x1b])
+    else:
+        raise ValueError('Bank of size %d bytes not supported' % (len(bank_bytes)))
+
+    output_bytes += bank_bytes
+
+    output_bytes += bytes([compute_checksum(bank_bytes, offset_start=0, offset_end=0)])
+
+    return output_bytes

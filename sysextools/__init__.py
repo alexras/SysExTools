@@ -13,7 +13,7 @@ _PARSERS = {
 # This is a map from strings to modules, but typing annotations don't seem to
 # know about modules, so I'm annotating it as having "any" as its value type
 # TODO: is there a more elegant way of doing this?
-_FORMATS = {
+_FORMAT_MODULES = {
     'yamaha': yamaha
 }  # type: Dict[str, Any]
 
@@ -64,7 +64,7 @@ def parse(sysex_file, **kwargs) -> List[Dict[str, Any]]:
 def dump(parsed_sysex: List[Dict[str, Any]], sysex_file: str):
     manufacturer = parsed_sysex[0]['MANUFACTURER']
 
-    format_lib = _FORMATS[manufacturer]
+    format_lib = _FORMAT_MODULES[manufacturer]
 
     with open(sysex_file, 'wb') as fp:
         fp.write(SYSEX_START_BYTE.to_bytes(1, byteorder='little'))
@@ -77,3 +77,20 @@ def dump(parsed_sysex: List[Dict[str, Any]], sysex_file: str):
 
         fp.write(SYSEX_END_BYTE.to_bytes(1, byteorder='little'))
         fp.flush()
+
+
+def add_headers_and_footers(bank_file: str, manufacturer: str, model: str) -> bytes:
+    with open(bank_file, 'rb') as fp:
+        bank_bytes = fp.read()
+
+        if manufacturer not in _FORMAT_MODULES:
+            raise NotSupportedError('Manufacturer %s is not supported' % (manufacturer))
+
+        format_lib = _FORMAT_MODULES[manufacturer]
+
+        complete_sysex_msg = format_lib.add_headers_and_footers(bank_bytes, model)
+
+        header_bytes = [SYSEX_START_BYTE]
+        header_bytes.extend(format_lib.MANUFACTURER_ID)
+
+        return bytes(header_bytes) + complete_sysex_msg + bytes([SYSEX_END_BYTE])
