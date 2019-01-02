@@ -1,0 +1,222 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "operators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "envelope_generator": {
+            "type": "object",
+            "properties": {
+              "rates": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 99
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              "levels": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 99
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "required": ["rates", "levels"]
+          },
+          "keyboard": {
+            "type": "object",
+            "properties": {
+              "level_scaling": {
+                "type": "object",
+                "properities": {
+                  "break_point": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "left_depth": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "left_curve": {
+                    "type": "string",
+                    "enum": ["-LIN", "-EXP", "+EXP", "+LIN"]
+                  },
+                  "right_depth": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "right_curve": {
+                    "type": "string",
+                    "enum": ["-LIN", "-EXP", "+EXP", "+LIN"]
+                  }
+                },
+                "required": ["break_point", "left_depth", "left_curve",
+                             "right_depth", "right_curve"]
+              }
+            },
+            "required": ["level_scaling", "rate_scaling",
+                         "velocity_sensitivity"]
+          },
+          "oscillator": {
+            "type": "object",
+            "properties": {
+              "detune": {
+                "type": "integer",
+                "minimum": -7,
+                "maximum": 7
+              },
+              "frequency": {
+                "type": "object",
+                "properties": {
+                  "fine": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99
+                  },
+                  "coarse": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 31
+                  }
+                },
+                "required": ["fine", "coarse"]
+              },
+              "mode": {
+                "type": "string",
+                "enum": ["ratio", "fixed"]
+              }
+            },
+            "required": ["detune", "frequency", "mode"]
+          },
+          "amp_mod_sensitivity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "output_level": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          }
+        },
+        "required": ["envelope_generator", "keyboard", "oscillator",
+                     "amp_mod_sensitivity", "output_level"]
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "pitch_envelope_generator": {
+      "type": "object",
+      "properties": {
+        "rates": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      },
+      "required": ["rates", "levels"]
+    },
+    "algorithm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 31
+    },
+    "feedback": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7
+    },
+    "oscillator_key_sync": {
+      "type": "boolean"
+    },
+    "lfo": {
+      "type": "object",
+      "properties": {
+        "speed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "delay": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "pitch_mod_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "amp_mod_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "key_sync": {
+          "type": "boolean"
+        },
+        "waveform": {
+          "type": "string",
+          "enum": ["triangle", "saw down", "saw up", "square", "sine",
+                   "sample and hold"]
+        }
+      },
+      "required": ["speed", "delay", "pitch_mod_depth", "amp_mod_depth",
+                   "key_sync", "waveform"]
+    },
+    "pitch_mod_sensitivity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 7
+    },
+    "transpose": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 48
+    },
+    "NAME": {
+      "type": "string",
+      "maxLength": 10
+    },
+    "MANUFACTURER": {
+      "type": "string",
+      "const": "yamaha"
+    },
+    "MODEL": {
+      "type": "string",
+      "const": "dx7"
+    }
+  },
+  "required": ["operators", "pitch_envelope_generator", "algorithm",
+               "feedback", "oscillator_key_sync", "lfo",
+               "pitch_mod_sensitivity", "transpose", "NAME",
+               "MANUFACTURER", "MODEL"]
+}
